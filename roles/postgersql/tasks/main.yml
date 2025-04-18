@@ -1,0 +1,17 @@
+---
+- name: Install PostgreSQL
+  apt:
+    name: postgresql
+    state: present
+  notify:
+    - Start PostgreSQL
+
+- name: Create PostgreSQL User
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: "{{ postgres_user }}"
+    password: "{{ postgres_password }}"
+    role_attr_flags: CREATEDB,NOSUPERUSER
+
+

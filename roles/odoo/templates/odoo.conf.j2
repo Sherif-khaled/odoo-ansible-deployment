@@ -1,0 +1,17 @@
+[options]
+; This is the password that allows database operations:
+admin_passwd = {{ odoo_master_password }}
+db_host = {{ postgres_host }}
+db_port = {{ postgres_port }}
+db_user = {{ postgres_user }}
+db_password = {{ postgres_password }}
+addons_path = {{ ([odoo_home_path + '/odoo/addons'] + ([odoo_home_path + '/enterprise'] if odoo_install_type == 'enterprise' else []) + [odoo_home_path + '/custom-addons']) | join(',') }}
+proxy_mode = True
+xmlrpc_port = {{ odoo_port }}
+logfile = /var/log/odoo/odoo{{ odoo_version }}.log
+limit_memory_hard = 4026531840
+limit_memory_soft = 3355443200
+limit_request = 8192
+limit_time_cpu = 600
+limit_time_real = 1200
+workers = 5

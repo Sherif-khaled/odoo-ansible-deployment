@@ -1,0 +1,10 @@
+---
+  - name: Reload service
+    systemd:
+      name: "{{ odoo_user }}"
+      state: reloaded
+
+  - name: Restart service
+    systemd:
+      name: "{{ odoo_user }}"
+      state: restarted 

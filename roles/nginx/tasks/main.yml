@@ -1,0 +1,60 @@
+---
+- name: Install Nginx & Certbot
+  apt:
+    name: 
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+    state: latest
+
+- name: Check if certificate already exists
+  stat:
+    path: /etc/letsencrypt/live/{{ odoo_url }}/fullchain.pem
+  register: cert_exists
+  notify:
+    - Stop Nginx
+  when: install_ssl | bool
+
+- meta: flush_handlers
+
+- name: Obtain SSL certificate with Certbot (if doesn't exist)
+  command: >
+    certbot certonly --nginx
+    --non-interactive
+    --agree-tos
+    --email {{ certbot_email }}
+    -d {{ odoo_url }}
+  when: not cert_exists.stat.exists and install_ssl | bool
+  notify:
+    - Start Nginx
+
+- meta: flush_handlers
+
+- name: Set up auto-renewal for SSL certificates
+  cron:
+    name: "Certbot Renewal"
+    job: certbot renew --pre-hook "service nginx stop" --post-hook "service nginx start"
+    hour: "3"
+    minute: "30"
+  when: install_ssl | bool
+
+- name: Create Nginx Configurations
+  template:
+    src: nginx.conf.j2
+    dest: "/etc/nginx/sites-available/{{ odoo_url }}"
+    owner: root
+    group: root
+  notify: Reload Nginx
+
+- name: Enable odoo nginx site
+  file:
+    src: "/etc/nginx/sites-available/{{ odoo_url }}"
+    dest: "/etc/nginx/sites-enabled/{{ odoo_url }}"
+    state: link
+  notify: Reload Nginx
+
+- name: Remove Default Nginx Configurations File
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload Nginx

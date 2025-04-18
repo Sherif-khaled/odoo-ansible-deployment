@@ -1,0 +1,103 @@
+---
+- name: Create repository in GitHub organization
+  uri:
+    url: https://api.github.com/orgs/{{ github_org }}/repos
+    method: POST
+    body_format: json
+    headers:
+      Authorization: "token {{ github_token }}"
+      Accept: "application/vnd.github.v3+json"
+    body:
+      name: "{{ github_repo }}"
+      private: "{{ repo_private }}"
+      auto_init: true  # Initialize with README
+      status_code: [201, 422]  # 422 means repo already exists
+  register: repo_creation
+  failed_when: 
+    - repo_creation.status != 201 
+    - repo_creation.status != 422 
+    - "'already exists' not in (repo_creation.json.errors[0].message | default(''))"
+
+- name: Display repository creation results
+  debug:
+    msg: "Repository {{ 'already exists' if repo_creation.status == 422 else 'created successfully' }}"
+
+- name: Ensure .ssh directory exists
+  file:
+    path: "~/.ssh"
+    state: directory
+    mode: '0700'
+
+- name: Check if SSH key already exists
+  stat:
+    path: "~/.ssh/{{ ssh_key_name }}"
+  register: ssh_key
+
+- name: Generate ED25519 SSH key pair
+  openssh_keypair:
+    path: "~/.ssh/{{ ssh_key_name }}"
+    type: ed25519
+    state: present
+  when: not ssh_key.stat.exists
+
+- name: Get public key content
+  command: cat "~/.ssh/{{ ssh_key_name }}.pub"
+  register: public_key_content
+  changed_when: false
+
+- name: Add SSH key to GitHub
+  uri:
+    url: https://api.github.com/repos/{{ github_org }}/{{ github_repo }}/keys
+    method: POST
+    body_format: json
+    headers:
+      Authorization: "token {{ github_token }}"
+      Accept: "application/vnd.github.v3+json"
+    body:
+      title: "AutoPull Request"
+      key: "{{ public_key_content.stdout }}"
+      read_only: false
+      status_code: [201, 422]  # 422 means key already exists
+  register: github_key_response
+  failed_when: 
+    - github_key_response.status != 201
+    - github_key_response.status != 422
+    - "'key is already in use' not in (github_key_response.json.errors[0].message | default(''))"
+
+- name: Ensure SSH config exists for GitHub
+  blockinfile:
+    path: ~/.ssh/config
+    create: yes
+    mode: '0600'
+    block: |
+      Host github.com
+        HostName github.com
+        User git
+        IdentityFile ~/.ssh/{{ ssh_key_name }}
+        IdentitiesOnly yes
+
+- name: Add GitHub host key to known_hosts
+  shell: ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
+  args:
+    creates: ~/.ssh/known_hosts.github_entry
+
+- name: Clone repository using SSH
+  git:
+    repo: "git@github.com:{{ github_org }}/{{ github_repo }}.git"
+    dest: "{{ odoo_home_path }}/custom-addons/{{ github_repo }}"
+    key_file: "~/.ssh/{{ ssh_key_name }}"
+    accept_hostkey: yes
+  register: clone_result
+  ignore_errors: yes
+  notify:
+    - Add repository path to Git safe.directory
+
+- name: Change Github Repo Ownership
+  file:
+    path: "{{ odoo_home_path }}/custom-addons/{{ github_repo }}"
+    state: directory
+    owner: "{{ odoo_user }}"
+    group: "root"
+    mode: 0755
+  notify:
+    - Add repository path to Git safe.directory

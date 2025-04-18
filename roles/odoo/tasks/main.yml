@@ -1,0 +1,143 @@
+---
+  - name: Create odoo Group
+    group:
+      name: "{{ odoo_user }}"
+      system: yes
+
+  - name: Create odoo User
+    user:
+      name: "{{ odoo_user }}"
+      group: "{{ odoo_user }}"
+      home: "{{ odoo_home_path }}"
+      system: yes
+      shell: /bin/bash
+      createhome: yes
+
+  - name: Create log directory
+    file:
+      path: "/var/log/odoo"
+      state: directory
+      owner: "{{ odoo_user }}"
+      mode: 0755
+  
+  - name: Clone odoo {{ odoo_version }} from github
+    git:
+      repo: "https://github.com/odoo/odoo.git"
+      version: "{{ odoo_version }}.0"
+      dest: "{{ odoo_home_path }}/odoo"
+      depth: 1
+      force: yes
+    become: yes
+    become_user: "{{ odoo_user }}"
+
+  - name: Clone Odoo Enterprise
+    git:
+      repo: "https://{{ enterprise_user_token }}@github.com/odoo/enterprise.git"
+      version: "{{ odoo_version }}.0"
+      dest: "{{ odoo_home_path }}/enterprise"
+      depth: 1
+    ignore_errors: yes
+    become: yes
+    become_user: "{{ odoo_user }}"
+    when: odoo_install_type == 'enterprise'
+
+  - name: Remove specific gevent lines from requirements file
+    ansible.builtin.replace:
+      path: "{{ odoo_home_path }}/odoo/requirements.txt"
+      regexp: '^gevent.*\n?'
+      replace: ''
+
+  - name: Remove specific greenlet lines from requirements file
+    ansible.builtin.replace:
+      path: "{{ odoo_home_path }}/odoo/requirements.txt"
+      regexp: '^greenlet.*\n?'
+      replace: ''
+  
+  - name: Create Odoo virtual environment
+    command: python3 -m venv /opt/{{ odoo_user }}/odoo-venv
+    args:
+      creates: "/opt/{{ odoo_user }}/odoo-venv"
+    become: yes
+    become_user: "{{ odoo_user }}"
+
+  - name: Upgrade pip in virtual environment
+    pip:
+      name:
+        - pip
+        - setuptools
+        - wheel
+        - gevent
+        - greenlet
+        - six
+      state: latest
+      virtualenv: "{{ odoo_home_path }}/odoo-venv"
+    become: yes
+    become_user: "{{ odoo_user }}"
+
+  - name: Install odoo requirements
+    pip:
+      requirements: "{{ odoo_home_path }}/odoo/requirements.txt"
+      extra_args: "--no-deps"
+      state: present
+      virtualenv: "{{ odoo_home_path }}/odoo-venv"
+    become: yes
+    become_user: "{{ odoo_user }}"
+
+  - name: Install gevent from pip with specific working version
+    pip:
+      name: gevent
+      virtualenv: "{{ odoo_home_path }}/odoo-venv"
+      state: present
+    become: yes
+    become_user: "{{ odoo_user }}"
+
+  - name: Create odoo custom addons
+    file:
+      name: "{{ odoo_home_path }}/custom-addons"
+      state: directory
+      owner: "{{ odoo_user }}"
+      group: "{{ odoo_user }}"
+      mode: 0755
+    become: yes
+    become_user: "{{ odoo_user }}"
+
+  - name: Create odoo config file
+    template:
+      src: odoo.conf.j2
+      dest: "/etc/{{ odoo_user }}.conf"
+      owner: "{{ odoo_user }}"
+      group: "{{ odoo_user }}"
+      mode: 0640
+
+  - name: Create odoo service file
+    template:
+      src: odoo.service.j2
+      dest: "/etc/systemd/system/{{ odoo_user }}.service"
+      owner: root
+      group: root
+      mode: 0644
+    notify: 
+      - Reload service
+      - Restart service
+
+  - meta: flush_handlers
+
+  - name: Download wkhtmltopdf binary
+    get_url:
+      url: "https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb"
+      dest: "/tmp/wkhtmltox_0.12.5-1.bionic_amd64.deb"
+    when: install_wkhtmltopdf | bool
+  
+  - name: Install wkhtmltopdf DEB package
+    apt:
+      deb: "/tmp/wkhtmltox_0.12.5-1.bionic_amd64.deb"
+    when: install_wkhtmltopdf | bool
+
+  - name: Remove downloaded DEB package
+    file:
+      path: "/tmp/wkhtmltox_0.12.5-1.bionic_amd64.deb"
+      state: absent
+    when: install_wkhtmltopdf | bool
+
+
+

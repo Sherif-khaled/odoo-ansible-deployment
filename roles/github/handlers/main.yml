@@ -1,0 +1,4 @@
+---
+- name: Add repository path to Git safe.directory
+  command: git config --global --add safe.directory {{ odoo_home_path }}/custom-addons
+  ignore_errors: yes

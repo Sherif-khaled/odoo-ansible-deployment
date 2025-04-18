@@ -1,0 +1,38 @@
+---
+- name: Get public IP using ipify service
+  uri:
+    url: https://api.ipify.org?format=json
+    method: GET
+    return_content: yes
+  register: ipify_result
+
+- name: Store public IP in a variable
+  set_fact:
+    public_ip: "{{ ipify_result.json.ip }}"
+
+- name: Extract the domain name
+  set_fact:
+    domain_name: "{{ odoo_url.split('.')[-2:] | join('.') }}"
+    
+- name: Extract the subdomain
+  set_fact:
+    subdomain: "{{ odoo_url.split('.')[:-(odoo_url.split('.')|length-1)] | join('.') }}"
+  when: odoo_url.split('.') | length > 2
+
+- name: Create DNS Record
+  community.general.cloudflare_dns:
+    zone: "{{ domain_name }}"
+    record: "{{ subdomain }}"
+    type: "A"
+    value: "{{ public_ip }}"
+    state: present
+    api_token: "{{ cloudflare_api_token }}"
+  register: cloudflare_result
+
+- name: Show result
+  debug:
+    var: cloudflare_result
+
+- name: Wait for DNS Record to be ready
+  pause:
+    seconds: 60

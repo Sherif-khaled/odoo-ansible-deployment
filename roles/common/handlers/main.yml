@@ -1,0 +1,9 @@
+---
+- name: apt_clean
+  apt:
+    autoclean: yes
+    update_cache: no
+
+- name: Update apt cache
+  apt:
+    update_cache: yes

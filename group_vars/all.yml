@@ -1,0 +1,149 @@
+---
+# =============================================================================
+# ODOO INSTALLATION VARIABLES
+# =============================================================================
+# This file contains all variables used for Odoo installation and configuration.
+# Customize these values according to your specific requirements.
+
+# =============================================================================
+# Odoo Configuration
+# =============================================================================
+# odoo_version: The version of Odoo to install
+odoo_version: 17
+
+# odoo_home_path: The installation directory for Odoo
+odoo_home_path: "/opt/odoo{{ odoo_version }}"
+
+# odoo_install_type: Determines whether to install Community or Enterprise edition
+# Options: community, enterprise
+odoo_install_type: community
+
+# odoo_user: The system user that will run the Odoo service
+odoo_user: "odoo{{ odoo_version }}"
+
+# odoo_port: The port on which Odoo will listen
+odoo_port: 8069
+
+# =============================================================================
+# PostgreSQL Configuration
+# =============================================================================
+# postgres_host: The hostname of the PostgreSQL server
+postgres_host: localhost
+
+# postgres_port: The port on which PostgreSQL listens
+postgres_port: 5432
+
+# postgres_user: The PostgreSQL user for Odoo
+postgres_user: odoo{{ odoo_version }}
+
+# postgres_password: The PostgreSQL user password
+# Security note: Consider using Ansible Vault to encrypt this value
+postgres_password: odoo
+
+# =============================================================================
+# Odoo Security
+# =============================================================================
+# odoo_master_password: The master password for Odoo's database manager
+# Security note: This should be a strong password and encrypted with Ansible Vault
+odoo_master_password: ""
+
+# =============================================================================
+# Database Creation
+# =============================================================================
+# create_database: Whether to create an initial Odoo database
+create_database: true
+
+# odoo_db_name: The name for the initial Odoo database
+odoo_db_name: production
+
+# odoo_username: The admin username for the created database
+odoo_username: admin
+
+# odoo_admin_password: The admin user password for the created database
+# Security note: This should be a strong password and encrypted with Ansible Vault
+odoo_admin_password: ""
+
+# odoo_country_code: The country code for initial localization
+odoo_country_code: "US"
+
+# odoo_lang: The language code for initial localization
+odoo_lang: "en_US"
+
+# db_creation_timeout: Timeout (in seconds) for database creation
+db_creation_timeout: 2000
+
+# =============================================================================
+# Additional Software
+# =============================================================================
+# install_wkhtmltopdf: Whether to install wkhtmltopdf (required for PDF generation)
+install_wkhtmltopdf: yes
+
+# =============================================================================
+# Nginx Configuration
+# =============================================================================
+# install_nginx: Whether to install and configure Nginx as a reverse proxy
+install_nginx: true
+
+# odoo_url: The domain name that will be used to access Odoo like odoo.example.com
+odoo_url: ""
+
+# install_ssl: Whether to install and configure SSL using Let's Encrypt
+install_ssl: true
+
+# certbot_email: Email address for Let's Encrypt notifications like info@example.com
+certbot_email: ""
+
+# =============================================================================
+# Odoo Enterprise Configuration
+# =============================================================================
+# enterprise_user_token: The access token for downloading Odoo Enterprise
+# Security note: This should be encrypted with Ansible Vault
+enterprise_user_token: ""
+
+# =============================================================================
+# Cloudflare Integration
+# =============================================================================
+# enable_create_cloudflare_record: Whether to create DNS records in Cloudflare
+enable_create_cloudflare_record: false
+
+# cloudflare_api_token: API token for Cloudflare authentication
+# Security note: This should be encrypted with Ansible Vault
+cloudflare_api_token: ""
+
+# =============================================================================
+# GitHub Repository Integration
+# =============================================================================
+# create_repo: Whether to create a GitHub repository for this installation
+create_repo: false
+
+# github_repo: The name of the GitHub repository to create
+github_repo: ""
+
+# ssh_key_name: The name of the SSH key for GitHub authentication
+ssh_key_name: "{{ github_repo }}"
+
+# github_org: The GitHub organization where the repository will be created
+github_org: ""
+
+# repo_private: Whether the created repository should be private
+repo_private: true
+
+# github_token: GitHub personal access token for repository creation
+# Security note: This should be encrypted with Ansible Vault
+github_token: ""
+
+# =============================================================================
+# Slack Notifications
+# =============================================================================
+# send_to_slack: Whether to send installation notifications to Slack
+send_to_slack: true
+
+# slack_webhook_url: The webhook URL for Slack integration
+# Security note: This should be encrypted with Ansible Vault
+slack_webhook_url: ""
+
+# slack_channel: The Slack channel to send notifications to
+slack_channel: "#ansible-notifications"
+
+# slack_username: The username to display for Slack notifications
+slack_username: "Odoo Installer Bot"

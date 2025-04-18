@@ -1,0 +1,36 @@
+---
+- name: Install Certbot
+  apt:
+    name: 
+      - certbot
+      - python3-certbot-nginx
+    state: latest
+
+- name: Check if certificate already exists
+  stat:
+    path: /etc/letsencrypt/live/{{ odoo_domain }}/fullchain.pem
+  register: cert_exists
+  notify:
+    - Stop Nginx
+
+- meta: flush_handlers
+
+- name: Obtain SSL certificate with Certbot (if doesn't exist)
+  command: >
+    certbot certonly --nginx
+    --non-interactive
+    --agree-tos
+    --email {{ certbot_email }}
+    -d {{ odoo_domain }}
+  when: not cert_exists.stat.exists
+  notify:
+    - Start Nginx
+
+- meta: flush_handlers
+
+- name: Set up auto-renewal for SSL certificates
+  cron:
+    name: "Certbot Renewal"
+    job: certbot renew --pre-hook "service nginx stop" --post-hook "service nginx start"
+    hour: "3"
+    minute: "30"

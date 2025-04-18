@@ -1,0 +1,72 @@
+---
+- name: Update package lists
+  apt:
+    update_cache: yes
+
+- name: Upgrade packages
+  apt:
+    upgrade: dist
+
+- name: Autoremove unused packages
+  apt:
+    autoremove: yes
+    purge: yes
+
+- name: Clean up APT Cache
+  apt: 
+    autoclean: yes
+  
+- name: Add or update a repository in sources.list.d
+  apt_repository:
+    repo: "deb http://security.ubuntu.com/ubuntu focal-security main"
+    state: present
+    filename: libssl1.1
+    update_cache: yes
+  
+- name: Install common dependencies
+  apt:
+    name:
+      - python3-pip
+      - python3-dev
+      - python3-wheel
+      - python3-psycopg2
+      - build-essential
+      - wget
+      - unzip
+      - git
+      - libxslt1-dev
+      - libzip-dev
+      - libldap2-dev
+      - libsasl2-dev
+      - libssl-dev
+      - node-less
+      - libjpeg-dev
+      - zlib1g-dev
+      - liblcms2-dev
+      - libxml2-dev
+      - libxslt1-dev
+      - libjpeg8-dev
+      - libpq-dev
+      - libffi-dev
+      - nodejs
+      - npm
+      - libssl1.1
+    state: present
+  notify:
+    - apt_clean
+
+- meta: flush_handlers
+
+- name: Get Python version
+  command: python3 -c "import platform; print(platform.python_version())"
+  register: python_version
+
+- name: Install matching python venv package
+  become: yes
+  apt:
+    name: "python{{ python_version.stdout.split('.')[0] }}.{{ python_version.stdout.split('.')[1] }}-venv"
+    state: present
+
+- name: Set timezone to UTC
+  timezone:
+    name: UTC

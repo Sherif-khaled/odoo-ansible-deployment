@@ -1,0 +1,86 @@
+---
+- name: Install odoo
+  hosts: odoo_servers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: cloudflare
+      when: install_nginx | bool 
+    - common
+    - postgersql
+    - odoo
+    - role: nginx
+      when: install_nginx | bool
+    - role: certbot
+      when: install_ssl | bool and install_nginx | bool
+    - role: odoo_database
+      when: create_database | bool
+    - role: github
+      when: create_repo | bool
+
+
+  post_tasks:
+
+    - name: Display Installation Summary
+      debug:
+        msg: |
+          Odoo Installation Complete!
+          
+          Odoo URL: http{% if install_nginx | bool and install_ssl | bool %}s{% endif %}://{{ odoo_url | default(ansible_default_ipv4.address) }}{% if not install_nginx | bool %}:{{ odoo_port }}{% endif %}
+          Master Password: {{ odoo_master_password }} (Keep this secured)
+          
+          {% if create_database | bool %}
+          Database Info:
+          - Database Name: {{ odoo_db_name }}
+          - Login Username: {{ odoo_username }}
+          - Login Password: {{ odoo_admin_password }}
+          {% endif %}
+
+
+    - name: Send Installation Summary to Slack
+      uri:
+            url: "{{ slack_webhook_url }}"
+            method: POST
+            body_format: json
+            body: |
+              {
+                "channel": "{{ slack_channel }}",
+                "username": "{{ slack_username }}",
+                "text": "Odoo Installation Complete!",
+                "attachments": [
+                  {
+                    "color": "#36a64f",
+                    "title": "Installation Summary",
+                    "fields": [
+                      {
+                        "title": "Odoo URL",
+                        "value": "http{% if install_nginx | bool and install_ssl | bool %}s{% endif %}://{{ odoo_url }}{% if not install_nginx | bool %}:{{ odoo_port }}{% endif %}",
+                        "short": true
+                      },
+                      {
+                        "title": "Installation Type",
+                        "value": "{{ odoo_install_type | capitalize }} Edition",
+                        "short": true
+                      },
+                      {
+                        "title": "Master Password",
+                        "value": "{{ odoo_master_password }} (Encrypted in system)",
+                        "short": false
+                      },
+                      {% if create_database | bool %}
+                      {
+                        "title": "Database Info",
+                        "value": "Database Name: {{ odoo_db_name }}\nLogin Username: {{ odoo_username }}\nLogin Password: {{ odoo_admin_password }}",
+                        "short": false
+                      },
+                      {% endif %}
+                    ],
+                    "footer": "Itzain Ansible Automation",
+                    "ts": "{{ ansible_date_time.epoch }}"
+                  }
+                ]
+              }
+      when: send_to_slack | bool
+
+
