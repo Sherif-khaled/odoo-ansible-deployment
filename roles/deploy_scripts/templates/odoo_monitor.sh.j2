@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# -------- CONFIG ---------
+ODOO_SERVICE= {{ odoo_user }}
+ODOO_USER= {{ odoo_user }}
+ODOO_VENV_PATH="{{ odoo_home_path }}/odoo-venv"
+SLACK_WEBHOOK_URL={{ slack_webhook_url }}  # Webhook Slack URL
+LOG_FILE="/var/log/odoo/odoo_monitor.log"
+# --------------------------
+
+# Function to send Slack notifications
+send_slack_notification() {
+    local emoji="$1"
+    local title="$2"
+    local message="$3"
+    local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
+    local mem_usage=$(free -m | awk '/Mem:/ { printf("%.2f"), $3/$2 * 100 }')
+
+    curl -X POST -H 'Content-type: application/json' \
+        --data "{
+            \"text\": \"${emoji} *${title}*\n${message}\n\n*CPU Usage:* ${cpu_usage}%\n*Memory Usage:* ${mem_usage}%\n*Time:* $(date '+%Y-%m-%d %H:%M:%S')\"
+        }" \
+        "${SLACK_WEBHOOK_URL}"
+}
+
+# Function to check service status
+check_service_status() {
+    systemctl is-active "$ODOO_SERVICE"
+}
+
+# Function to get last service error reason
+get_service_failure_reason() {
+    journalctl -u "$ODOO_SERVICE" -n 50 --no-pager | grep -E "Killed process|ModuleNotFoundError" | tail -1
+}
+
+# Function to restart Odoo service
+restart_service() {
+    systemctl restart "$ODOO_SERVICE"
+}
+
+# Start monitoring loop
+while true; do
+    service_status=$(check_service_status)
+
+    if [ "$service_status" == "active" ]; then
+        echo "$(date) - Service running normally." >> "$LOG_FILE"
+        sleep 60
+    else
+        reason=$(get_service_failure_reason)
+
+        if echo "$reason" | grep -q "Killed process"; then
+            restart_service
+            send_slack_notification ":fire:" "Odoo Service OOM Kill Detected" "Odoo service was stopped due to *Out Of Memory*. Service has been *restarted* successfully. :rocket:"
+            echo "$(date) - Restarted due to OOM Kill." >> "$LOG_FILE"
+
+        elif echo "$reason" | grep -q "ModuleNotFoundError"; then
+            missing_module=$(echo "$reason" | grep -oP "No module named '\K[^']+")
+
+            if [ -n "$missing_module" ]; then
+                su - "$ODOO_USER" -c "
+                    source '${ODOO_VENV_PATH}/bin/activate' &&
+                    pip3 install ${missing_module}
+                "
+
+                restart_service
+                send_slack_notification ":package:" "Missing Python Module Fixed" "The missing Python module *${missing_module}* was installed and the Odoo service was *restarted* successfully. :rocket:"
+                echo "$(date) - Installed ${missing_module} and restarted." >> "$LOG_FILE"
+            else
+                send_slack_notification ":warning:" "Unknown Python Module Error" "Odoo service stopped due to *missing Python module*, but the module name could not be detected automatically."
+                echo "$(date) - Unknown ModuleNotFoundError, no module parsed." >> "$LOG_FILE"
+            fi
+
+        else
+            send_slack_notification ":x:" "Unknown Service Failure" "Odoo service stopped for an *unknown reason*. Manual intervention may be needed. :construction_worker:"
+            echo "$(date) - Unknown reason detected. Manual check required." >> "$LOG_FILE"
+        fi
+
+        sleep 10  # Shorter sleep after failure
+    fi
+done

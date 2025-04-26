@@ -7,3 +7,13 @@
     hour: 3
     user: root
     state: present
+
+- name: Reload Services
+  systemd:
+    name: odoo-monitor
+    state: reloaded
+
+- name: Start Odoo Monitor Service
+  systemd:
+    name: odoo-monitor
+    state: restarted 

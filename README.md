@@ -40,6 +40,8 @@ A complete **Ansible-based automation toolkit** for deploying Odoo on either **c
         │   │    └── main.yml
         |   └── templates
         │       └── database_backup.sh.j2
+        |       └── odoo_monitor.sh.j2
+        |       └── odoo-monitor.service.j2
         ├── github
         │   ├── handlers
         │   │   └── main.yml
@@ -162,6 +164,16 @@ This tables provides a comprehensive explanation of all variables used in the Od
 | `repo_private` | Whether the created repository should be private | `true` | `true`, `false` |
 | `github_token` | GitHub personal access token for repository creation | (Empty string) | Valid GitHub PAT |
 
+## Deploy Scripts
+
+| Variable | Description | Default | Options |
+|----------|-------------|---------|---------|
+| `deploy_scripts` | Whether to deploy odoo scripts | `true` | `true`, `false` |
+| `database_backup_script` |  Deploy Database backup script | `true` | `true`, `false` |
+| `database_backup_path` | Default database backup directory path | `{{ odoo_home_path }}/database_backup` | Any directory path name |
+| `odoo_monitor_script` | The GitHub organiDeploy odoo monitor and self-healing script | `true` | `true`, `false` |
+
+
 ## Slack Notifications
 
 | Variable | Description | Default | Options |
@@ -205,6 +217,8 @@ Certbot is used to issue and install SSL certificates for your domain automatica
 
 #### 🚀 Deploy Odoo Scrits
  - Deploy odoo backup database script to take database backup daily at 3A.M and store the backup in ~/database_backup directoey
+ - [Deploy odoo monitor and self-healing script](docs/odoo-monitor.md)
+
 
 ## 📚 Long Description
 This project is designed to eliminate the complexity of deploying Odoo across various environments using Ansible, ensuring that you can focus on development and business logic rather than infrastructure management. It supports multiple Odoo versions (15 through 18) and is built with a focus on scalability, automation, and ease of use.

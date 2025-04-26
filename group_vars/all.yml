@@ -141,7 +141,11 @@ deploy_scripts: true
 # database_backup_script: Deploy Database backup script
 database_backup_script: true
 
+# database_backup_path: Default database backup directory path
 database_backup_path: "{{ odoo_home_path }}/database_backup"
+
+# odoo_monitor_script: Deploy odoo monitor and self-healing script
+odoo_monitor_script: true
 
 # =============================================================================
 # Slack Notifications
