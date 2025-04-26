@@ -51,7 +51,7 @@ odoo_master_password: ""
 # Database Creation
 # =============================================================================
 # create_database: Whether to create an initial Odoo database
-create_database: true
+create_database: false
 
 # odoo_db_name: The name for the initial Odoo database
 odoo_db_name: production
@@ -131,6 +131,17 @@ repo_private: true
 # github_token: GitHub personal access token for repository creation
 # Security note: This should be encrypted with Ansible Vault
 github_token: ""
+
+# =============================================================================
+# Deploy Scripts
+# =============================================================================
+# deploy_scripts: Whether to deploy scripts
+deploy_scripts: true
+
+# database_backup_script: Deploy Database backup script
+database_backup_script: true
+
+database_backup_path: "{{ odoo_home_path }}/database_backup"
 
 # =============================================================================
 # Slack Notifications

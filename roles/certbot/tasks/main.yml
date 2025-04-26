@@ -8,7 +8,7 @@
 
 - name: Check if certificate already exists
   stat:
-    path: /etc/letsencrypt/live/{{ odoo_domain }}/fullchain.pem
+    path: /etc/letsencrypt/live/{{ odoo_url }}/fullchain.pem
   register: cert_exists
   notify:
     - Stop Nginx
@@ -21,7 +21,7 @@
     --non-interactive
     --agree-tos
     --email {{ certbot_email }}
-    -d {{ odoo_domain }}
+    -d {{ odoo_url }}
   when: not cert_exists.stat.exists
   notify:
     - Start Nginx

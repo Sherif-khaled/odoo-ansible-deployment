@@ -11,6 +11,7 @@ A complete **Ansible-based automation toolkit** for deploying Odoo on either **c
 - 🛡️ **Auto-create DNS records in Cloudflare (if using Cloudflare as DNS editor)**
 - 🧩 **Auto-create GitHub repo if using an organization**
 - 🛠️ **Auto-initialize the Odoo database**
+- 🚀 **Deploy odoo helper scripts**
 
 ## 📁 Project Structure
 
@@ -32,6 +33,13 @@ A complete **Ansible-based automation toolkit** for deploying Odoo on either **c
         │   │   └── main.yml
         │   └── tasks
         │       └── main.yml
+        ├── deploy_scripts
+        │   ├── handlers
+        │   │   └── main.yml
+        │   |── tasks
+        │   │    └── main.yml
+        |   └── templates
+        │       └── database_backup.sh.j2
         ├── github
         │   ├── handlers
         │   │   └── main.yml
@@ -194,6 +202,9 @@ If you’re using GitHub organizations, the playbook can auto-create a new repos
 
 #### 🔐 SSL Integration
 Certbot is used to issue and install SSL certificates for your domain automatically.
+
+#### 🚀 Deploy Odoo Scrits
+ - Deploy odoo backup database script to take database backup daily at 3A.M and store the backup in ~/database_backup directoey
 
 ## 📚 Long Description
 This project is designed to eliminate the complexity of deploying Odoo across various environments using Ansible, ensuring that you can focus on development and business logic rather than infrastructure management. It supports multiple Odoo versions (15 through 18) and is built with a focus on scalability, automation, and ease of use.

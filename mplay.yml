@@ -18,6 +18,8 @@
       when: create_database | bool
     - role: github
       when: create_repo | bool
+    - role: deploy_scripts
+      when: deploy_scripts | bool
 
 
   post_tasks:

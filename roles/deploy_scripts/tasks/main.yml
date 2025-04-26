@@ -1,0 +1,27 @@
+---
+- name: Create Scripts Directory
+  file:
+    name: "{{ odoo_home_path }}/scripts"
+    state: directory
+    owner: root
+    group: root
+
+- name: Create Database Bacup Directory
+  file:
+    name: "{{ database_backup_path  }}"
+    state: directory
+    owner: root
+    group: root
+  when: database_backup_script | bool
+
+- name: Deploy Database Backup Bash Script
+  template:
+    src: database_backup.sh.j2
+    dest: "{{ odoo_home_path }}/scripts"
+    mode: 0755
+    owner: root
+  notify:
+    - Create Database Backup Bash Script Cronjob
+  when: database_backup_script | bool
+
+- meta: flush_handlers

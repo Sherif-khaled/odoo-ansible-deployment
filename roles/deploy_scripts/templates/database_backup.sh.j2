@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# Backup Script for Odoo Database
+#
+# Description:
+# This script creates a backup of an Odoo database by:
+# - Copying the filestore and creating a database dump
+# - Zipping the filestore and dump into a single archive
+# - Moving the final backup zip file to the backup directory with a timestamp
+# - Cleaning up temporary files
+#
+# Usage:
+#   ./database_backup.sh
+#
+# Requirements:
+# - Script must be run by a user with sudo privileges
+# - Replace ODOO_USER and DATABASE_NAME variables with your actual values
+#
+# Author: Sherif Khaled
+# Date: 2025-04-26
+#
+
+# Variables
+ODOO_USER={{ odoo_user }}
+DATABASE_NAME={{ odoo_db_name }}
+BACKUP_DIR={{ database_backup_path }}
+TMP_BACKUP="/tmp/backup"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+FINAL_BACKUP="$BACKUP_DIR/${DATABASE_NAME}_${TIMESTAMP}.zip"
+
+
+# Run backup commands as Odoo user
+sudo -u "$ODOO_USER" bash << EOF
+mkdir -p "$TMP_BACKUP"
+cp -r ~/.local/share/Odoo/filestore/$DATABASE_NAME "$TMP_BACKUP/filestore"
+pg_dump -U "$ODOO_USER" -d "$DATABASE_NAME" -f "$TMP_BACKUP/dump.sql"
+cd "$TMP_BACKUP"
+zip -r "${DATABASE_NAME}.zip" dump.sql filestore
+EOF
+
+# Move the backup zip file to final location (as root)
+sudo mv "$TMP_BACKUP/${DATABASE_NAME}.zip" "$FINAL_BACKUP"
+
+# Clean up temporary backup
+sudo rm -r "$TMP_BACKUP"
