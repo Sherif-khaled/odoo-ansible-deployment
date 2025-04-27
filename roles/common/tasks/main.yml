@@ -33,6 +33,7 @@
       - build-essential
       - wget
       - unzip
+      - zip
       - git
       - libxslt1-dev
       - libzip-dev
