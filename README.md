@@ -96,6 +96,7 @@ This tables provides a comprehensive explanation of all variables used in the Od
 | `odoo_install_type` | Determines whether to install Community or Enterprise edition | `enterprise` | `community`, `enterprise` |
 | `odoo_user` | The system user that will run the Odoo service | `odoo{{ odoo_version }}` | Any valid username |
 | `odoo_port` | The port on which Odoo will listen | `8077` | Any valid port number |
+| `longpolling_port` | The port on which Odoo longpoll will listen | `8072` | Any valid port number |
 
 ### PostgreSQL Configuration
 
@@ -246,7 +247,9 @@ This makes it ideal for businesses or freelancers running Odoo for multiple clie
 * Cloudflare API Token (optional)
 * (Optional) GitHub Personal Access Token (with `repo` & `admin:org` scopes)
 
-
+## Notes
+If you want need to install mutiple odoo versions on the same server you must
+change the ``` bash odoo_port, longpolling_port ```
 ## 🤝 Contributing
 Contributions are welcome! Feel free to open issues or submit pull requests for improvements, bug fixes, or new features.
 

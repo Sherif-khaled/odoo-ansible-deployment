@@ -6,10 +6,16 @@
 # Customize these values according to your specific requirements.
 
 # =============================================================================
+# Note
+# =============================================================================
+# If you want need to install mutiple odoo versions on the same server you must
+# change the odoo_port, longpolling_port
+
+# =============================================================================
 # Odoo Configuration
 # =============================================================================
 # odoo_version: The version of Odoo to install
-odoo_version: 17
+odoo_version: 18
 
 # odoo_home_path: The installation directory for Odoo
 odoo_home_path: "/opt/odoo{{ odoo_version }}"
@@ -23,6 +29,9 @@ odoo_user: "odoo{{ odoo_version }}"
 
 # odoo_port: The port on which Odoo will listen
 odoo_port: 8069
+
+# longpolling_port: The port on which Odoo longpoll will listen
+longpolling_port: 8072
 
 # =============================================================================
 # PostgreSQL Configuration
@@ -104,7 +113,7 @@ enterprise_user_token: ""
 # Cloudflare Integration
 # =============================================================================
 # enable_create_cloudflare_record: Whether to create DNS records in Cloudflare
-enable_create_cloudflare_record: false
+enable_create_cloudflare_record: true
 
 # cloudflare_api_token: API token for Cloudflare authentication
 # Security note: This should be encrypted with Ansible Vault
@@ -151,7 +160,7 @@ odoo_monitor_script: true
 # Slack Notifications
 # =============================================================================
 # send_to_slack: Whether to send installation notifications to Slack
-send_to_slack: true
+send_to_slack: false
 
 # slack_webhook_url: The webhook URL for Slack integration
 # Security note: This should be encrypted with Ansible Vault

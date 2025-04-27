@@ -77,11 +77,14 @@
   - name: Install odoo requirements
     pip:
       requirements: "{{ odoo_home_path }}/odoo/requirements.txt"
-      extra_args: "--no-deps"
       state: present
       virtualenv: "{{ odoo_home_path }}/odoo-venv"
     become: yes
     become_user: "{{ odoo_user }}"
+    retries: 3
+    delay: 10
+    register: pip_result
+    until: pip_result is succeeded
 
   - name: Install gevent from pip with specific working version
     pip:

@@ -8,6 +8,7 @@ db_password = {{ postgres_password }}
 addons_path = {{ ([odoo_home_path + '/odoo/addons'] + ([odoo_home_path + '/enterprise'] if odoo_install_type == 'enterprise' else []) + [odoo_home_path + '/custom-addons']) | join(',') }}
 proxy_mode = True
 xmlrpc_port = {{ odoo_port }}
+longpolling_port = {{ longpolling_port }}
 logfile = /var/log/odoo/odoo{{ odoo_version }}.log
 limit_memory_hard = 4026531840
 limit_memory_soft = 3355443200

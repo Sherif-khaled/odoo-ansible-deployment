@@ -17,7 +17,7 @@
 - name: Deploy Database Backup Bash Script
   template:
     src: database_backup.sh.j2
-    dest: "{{ odoo_home_path }}/scripts"
+    dest: "{{ odoo_home_path }}/scripts/database_backup.sh"
     mode: 0755
     owner: root
   notify:
@@ -29,7 +29,7 @@
 - name: Deploy Odoo Monitor Script
   template:
     src: odoo_monitor.sh.j2
-    dest: "{{ odoo_home_path }}/scripts"
+    dest: "{{ odoo_home_path }}/scripts/odoo_monitor.sh"
     mode: 0755
     owner: root
   when: odoo_monitor_script | bool
@@ -40,6 +40,6 @@
     dest: "/etc/systemd/system/odoo-monitor.service"
     owner: root
   notify:
-    - Reload Services
+    - Reload systemd daemon
     - Start Odoo Monitor Service
   when: odoo_monitor_script | bool

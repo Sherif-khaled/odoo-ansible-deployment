@@ -31,3 +31,49 @@
   timeout: "{{ db_creation_timeout }}"
   become: yes
   become_user: "{{ odoo_user }}"
+  ignore_errors: yes
+
+- name: Verify database creation
+  postgresql_query:
+    db: postgres
+    query: "SELECT 1 FROM pg_database WHERE datname = '{{ odoo_db_name }}';"
+  become: yes
+  become_user: postgres
+  register: db_verification
+  failed_when: db_verification.rowcount == 0 and not db_exists.failed
+  when: init_result is defined and (init_result.failed is defined and init_result.failed)
+
+- name: Retry database initialization if needed
+  command: >
+    {{ odoo_home_path }}/odoo-venv/bin/python3 {{ odoo_home_path }}/odoo/odoo-bin --no-http
+    --stop-after-init
+    -d {{ odoo_db_name }}
+    -i base
+    --db_host={{ postgres_host }}
+    --without-demo=true
+    --lang={{ odoo_lang }}
+    --load-language={{ odoo_lang }}
+    -c /etc/{{ odoo_user }}.conf
+  args:
+    chdir: "{{ odoo_home_path }}"
+  register: retry_result
+  become: yes
+  become_user: "{{ odoo_user }}"
+  when: 
+    - init_result is defined
+    - init_result.failed is defined and init_result.failed
+    - db_verification.rowcount == 0
+  timeout: "{{ db_creation_timeout | int + 300 }}"
+
+- name: Update Odoo admin user password in PostgreSQL
+  postgresql_query:
+    db: "{{ odoo_db_name }}"
+    query: "UPDATE res_users SET password = '{{ odoo_admin_password }}' WHERE login = 'admin';"
+  become: true
+  become_user: postgres
+  vars:
+    ansible_ssh_pipelining: true
+  when: 
+    - not db_exists.failed or
+      (init_result is defined and init_result.rc is defined and init_result.rc == 0) or
+      (retry_result is defined and retry_result.rc is defined and retry_result.rc == 0)

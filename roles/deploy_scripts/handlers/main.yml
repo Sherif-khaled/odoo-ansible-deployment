@@ -8,12 +8,13 @@
     user: root
     state: present
 
-- name: Reload Services
+- name: Reload systemd daemon
   systemd:
-    name: odoo-monitor
-    state: reloaded
+    daemon_reload: yes
+
 
 - name: Start Odoo Monitor Service
   systemd:
     name: odoo-monitor
     state: restarted 
+    enabled: yes
